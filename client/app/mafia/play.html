@@ -1,0 +1,34 @@
+
+play!
+{{user.name}}
+{{user.role}}
+
+<div class="container">
+  <div class="row" ng-if="gameState.phase == 'night' && gameState.subPhase == 'mafia' && user.role == 'mafia'">
+    <div class="col-sm-12">
+      Choose who to kill
+      <ul>
+        <li ng-repeat = "player in gameState.players | filter:{role : '!mafia'}">
+          {{player.name}}
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-12">
+      <div style="height: 500px;">
+        <div ng-repeat="chat in chats">
+          {{chat.time}}
+          {{chat.name}}
+          {{chat.message}}
+        </div>
+      </div>
+      <div class="form-group">
+        <input type="text" class="form-control" ng-model="chatMessage">
+      </div>
+      <form >
+        <button type="submit" class="btn btn-default" ng-click="chat()" style="margin: auto; display:block;">Send</button>
+      </form>
+    </div>
+  </div>
+</div>

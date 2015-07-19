@@ -26,34 +26,66 @@ server.listen(config.port, config.ip, function () {
 // Expose app
 exports = module.exports = app;
 
+var games = [];
+var sockets = [];
 var gamelessUsers = [];
 var currentRoom = 0;
 
 var startGame = function(){
-  var gameProcess = fork(__dirname + "/games/mafia/game.js");
+  var room = io.of("game" + currentRoom);
+  var gameProcess = fork(__dirname + "/games/mafia/game.js", [], {execArgv: ["--debug=" + 5859 + currentRoom]});
+  games.push({process: gameProcess, id: currentRoom, users: gamelessUsers});
+
   gameProcess.send({type: "create", users: gamelessUsers});
+
+  gameProcess.on("message", function(data){
+    var socket = _.find(sockets, function(socket){
+      return socket._user && socket._user.name == data.username;
+    });
+
+    socket.emit(data.message, data.payload);
+  });
+
+  var gameSockets = _.filter(sockets, function(socket){
+    return socket._user.room = currentRoom;
+  });
+
+  gameSockets.forEach(function(socket){
+    socket.on("tick", function(data){
+      gameProcess.send({type: "tick", data: data, user: socket._user.name});
+    });
+  });
 
   gamelessUsers = [];
   currentRoom = currentRoom + 1;
 };
 
-io.on('connection', function (socket) {
-  io.emit("test", "test");
 
+io.on('connection', function (socket) {
+  var roomNumber = currentRoom;
   socket.once("join", function(data){
+    sockets.push(socket);
     var starter = gamelessUsers.length == 0;
-    var user = {name: data.username, starter: starter, room: currentRoom};
+    var user = {name: data.username, starter: starter, room: roomNumber};
     gamelessUsers.push(user);
     socket._user = user;
-    socket.join("game" + currentRoom);
-    io.to("game" + currentRoom).emit("current-users", gamelessUsers);
+    socket.join("game" + roomNumber);
+    io.to("game" + roomNumber).emit("current-users", gamelessUsers);
     console.log("Connected User: " + data.username);
     console.log("Users: " + JSON.stringify(gamelessUsers));
 
     if(starter){
       socket.once("start-game", startGame);
     }
+
+    socket.on("disconnect", function(){
+      sockets = _.remove(sockets, function(socketEl){
+        socketEl._user.name = data.username;
+      });
+    });
   });
 
-
+  socket.on("chat", function(message){
+    io.to("game" + roomNumber).emit("chat", {time: new Date().toTimeString(), name: socket._user.name, message: message});
+  });
 });
