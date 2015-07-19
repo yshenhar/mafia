@@ -1,5 +1,7 @@
 'use strict';
 
+
+
 angular.module('mafiaApp', [
   'ngCookies',
   'ngResource',
@@ -11,5 +13,13 @@ angular.module('mafiaApp', [
     $urlRouterProvider
       .otherwise('/');
 
-    $locationProvider.html5Mode(true);
+    $locationProvider.html5Mode(false);
   });
+
+var mafiaApp = angular.module("mafiaApp");
+
+mafiaApp.run(function($rootScope){
+  var socket = io();
+
+  $rootScope.socket = socket;
+});

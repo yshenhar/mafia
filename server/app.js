@@ -12,6 +12,7 @@ var config = require('./config/environment');
 // Setup server
 var app = express();
 var server = require('http').createServer(app);
+var io = require('socket.io')(server);
 require('./config/express')(app);
 require('./routes')(app);
 
@@ -22,3 +23,17 @@ server.listen(config.port, config.ip, function () {
 
 // Expose app
 exports = module.exports = app;
+
+var users = [];
+
+io.on('connection', function (socket) {
+  io.emit("test", "test");
+
+  socket.on("join", function(data){
+    users.push({socket: socket, name: data.username});
+    console.log("Connected User: " + data.username);
+    console.log("Users: " + JSON.stringify(users.map(function(el){
+        return {name: el.name};
+      })));
+  });
+});
