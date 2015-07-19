@@ -1,0 +1,15 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <ul>
+        <li ng-repeat="user in users" ng-class="{'starter': user.starter}">
+          {{user.name}}
+        </li>
+      </ul>
+
+      <form ng-if="user.starter">
+        <button type="submit" class="btn btn-default" ng-click="startGame()" style="margin: auto; display:block;">Start The Game</button>
+      </form>
+    </div>
+  </div>
+</div>
