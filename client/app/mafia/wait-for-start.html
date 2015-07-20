@@ -1,15 +1,18 @@
 <div class="container">
   <div class="row">
+    <form ng-if="user.starter" style="margin-top: 25px;">
+      <button type="submit" class="btn " ng-click="startGame()" style="margin: auto; display:block;" ng-disabled="users.length < 6">Start The Game</button>
+    </form>
+
     <div class="col-sm-12">
-      <ul>
+      <h3 style="margin-top: 15px; text-align: center;">
+        Joined users
+      </h3>
+      <ul class="users">
         <li ng-repeat="user in users" ng-class="{'starter': user.starter}">
           {{user.name}}
         </li>
       </ul>
-
-      <form ng-if="user.starter">
-        <button type="submit" class="btn btn-default" ng-click="startGame()" style="margin: auto; display:block;" ng-disabled="users.length < 6">Start The Game</button>
-      </form>
     </div>
   </div>
 </div>

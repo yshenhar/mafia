@@ -43,8 +43,10 @@ var startGame = function(){
       return socket._user && socket._user.name == data.username;
     });
 
-    io.to("delphi").emit("delphi-watch", {originalMessage: data.message, originalData: data.payload, originalUser: socket._user.name});
-    socket.emit(data.message, data.payload);
+    if(socket){
+      io.to("delphi").emit("delphi-watch", {originalMessage: data.message, originalData: data.payload, originalUser: socket._user.name});
+      socket.emit(data.message, data.payload);
+    }
   });
 
   var gameSockets = _.filter(sockets, function(socket){
@@ -109,6 +111,6 @@ io.on('connection', function (socket) {
   socket.once("join", joinFunc);
 
   socket.on("chat", function(message){
-    io.to("game" + roomNumber).emit("chat", {time: new Date().toTimeString(), name: socket._user.name, message: message});
+    io.to("game" + roomNumber).emit("chat", {time: new Date().toLocaleTimeString(), name: socket._user.name, message: message});
   });
 });

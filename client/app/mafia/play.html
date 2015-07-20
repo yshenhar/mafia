@@ -1,71 +1,152 @@
-
-play!
-{{user.name}}
-{{user.role}}
-{{gameState.suggestedKill}}
 <div class="container">
-  <div ng-if="gameState.winner">
-    {{gameState.winner}} wins!
+  <ul class="nav nav-tabs" style="margin-bottom: 8px;">
+    <li role="presentation" ng-class="{active: page == 'game'}"><a ng-click="page = 'game'">Game</a></li>
+    <li role="presentation" ng-class="{active: page == 'chat'}"><a ng-click="page = 'chat'; newChats = false;">Chat</a></li>
+    <span style="float: right;">
+      <i class="fa fa-warning" ng-if="newChats" style="color: #fe54fe" ng-click="page = 'chat'; newChats = false;">You have new messages!</i>
+    </span>
+  </ul>
+
+  <div ng-show="alert && gameState.phase == 'day'" class="alert">
+    <div class="col-sm-12">
+      You have awoken from your slumber...
+      <span ng-show="alert.lastKilled">{{alert.lastKilled}} has died :O  All inhabitants gather in a townhall meeting and get ready for lynching</span>
+      <span ng-show="!alert.lastKilled">Everyone is alive and jovial!!</span>
+      <button type="submit" class="btn" ng-click="alert = null" style="margin: auto;  display: block;">X</button>
+    </div>
   </div>
 
-  <div ng-if="!gameState.winner">
-    <div ng-if="!user.isAlive">
-      You are dead :(
+  <div ng-show="alert && gameState.phase == 'night'" class="alert">
+    <div class="col-sm-12">
+      All the citizens have decided! {{alert.lastKilled}} has been suspected of being a mafia, and has been lynched.
+      <button type="submit" class="btn" ng-click="alert = null" style="margin: auto;  display: block;">X</button>
     </div>
-    <div class="row" ng-if="gameState.phase == 'night' && user.role == 'townfolk' && user.isAlive">
-      Please wait while people are dying and/or being saved.
-    </div>
-    <div class="row" ng-if="gameState.phase == 'night' && user.role == 'doctor' && user.isAlive">
+  </div>
+
+  <div ng-show="page == 'game'">
+    <div class="row" ng-show="!playing">
       <div class="col-sm-12">
-        Choose who to save
-        <ul>
-          <li ng-repeat = "player in gameState.players | filter: {isAlive: true}">
-            <button class="btn btn-default" ng-click="save(player)">
-              {{player.name}}
-            </button>
-          </li>
-        </ul>
+        Welcome to the game {{user.name}}
+        <br>        <br>
+        Your role is {{user.role}}
+        <br>        <br>
+        <div ng-switch on="user.role">
+          <div ng-switch-when="mafia">
+            As a member of the mafia, you have the important task of choosing someone to kill every night.
+            Each night you and all other living members of the mafia will be presented with a list of other living players that you can choose to kill.
+            After reaching a consensus the chosen player will be killed, unless saved by a doctor.
+          </div>
+          <div ng-switch-when="doctor">
+            As the only doctor in the village, it is your job to save people's lives! Each night you will be presented with a list of living players that you can save.
+            Your choice can prevent the mafia from successfully killing someone for each night.
+          </div>
+          <div ng-switch-when="townfolk">
+            You are a regular townfolk. At night time you go to sleep. After each night you may unexpectedly wake up dead. If you are still alive during the day, you must discuss amongst all remaining living people who you think is the mafia.
+          </div>
+        </div>
+        <button type="submit" class="btn " ng-click="playing = true" style="margin: auto;  display: block;">Let me play!!!</button>
       </div>
     </div>
-    <div class="row" ng-if="gameState.phase == 'night' && user.role == 'mafia' && user.isAlive">
-      <div class="col-sm-12">
-        Choose who to kill
-        <ul>
-          <li ng-repeat = "player in gameState.players | filter:{role : '!mafia', isAlive: true}">
-            <button class="btn btn-default" ng-click="kill(player)">
-              {{player.name}}
-            </button>
-          </li>
-        </ul>
+
+
+    <div ng-show="playing">
+      <div ng-if="gameState.winner">
+        {{gameState.winner}} wins!
+      </div>
+
+      <div ng-if="!gameState.winner">
+        <div ng-if="!user.isAlive" style="padding-bottom: 18px; text-align: center;">
+          You are dead :(
+          <img src="rip.png" height="200" width="150" style="display: block; margin: auto; margin-top: 15px;">
+        </div>
+        <div class="row" ng-if="gameState.phase == 'night' && user.role == 'townfolk' && user.isAlive">
+          It is currently the night phase. Members of the mafia and the doctor are out and about, while you are at home sleeping.
+        </div>
+        <div class="row" ng-if="gameState.phase == 'night' && user.role == 'doctor' && user.isAlive">
+          <div ng-if="!saved">
+            <div class="col-sm-12">
+              <h4>
+                Choose who to save
+              </h4>
+              <ul  class="who">
+                <li ng-repeat = "player in gameState.players | filter: {isAlive: true}">
+                  <button class="btn " ng-click="save(player);">
+                    {{player.name}}
+                  </button>
+                </li>
+              </ul>
+              <p class="text-error">After the doctor and mafia make their selection it will switch to day.</p>
+            </div>
+          </div>
+          <div ng-if="saved">
+            <div class="col-sm-12">
+              <h4>
+                You have chosen to save: {{saved.name}}
+              </h4>
+              <p>Waiting for mafia to make their choice...</p>
+            </div>
+          </div>
+        </div>
+        <div class="row" ng-if="gameState.phase == 'night' && user.role == 'mafia' && user.isAlive">
+          <div class="col-sm-12" ng-if="!killed()">
+            <h4>
+              Choose who to kill
+            </h4>
+            <ul  class="who">
+              <li ng-repeat = "player in gameState.players | filter:{role : '!mafia', isAlive: true}">
+                <button class="btn " ng-click="kill(player)">
+                  {{player.name}}
+                </button>
+                <table style="float: right; width: 50%; text-align: center;">
+                  <tr><td style="width: 50%;" ng-class="{you: gameState.suggestedKill[user.name] == player.name}">✔</td><td style="width: 50%;" ng-class="{him: gameState.suggestedKill[otherMafia.name] == player.name}">✔</td></tr>
+                </table>
+              </li>
+            </ul>
+            <p class="text-error">Once all living mafia choose the same target, that person will be killed (unless saved by the doctor). After the doctor and mafia make their selection it will switch to day.</p>
+          </div>
+          <div class="col-sm-12" ng-if="killed()">
+            <h4>You have chosen to kill: {{killed}}</h4>
+            <p>Waiting for the doctor to make his/her choice...</p>
+          </div>
+        </div>
+        <div class="row" ng-if="gameState.phase == 'day' && user.isAlive">
+          <div class="col-sm-12">
+            <h4>
+              Choose who to lynch
+            </h4>
+            <ul  class="who">
+              <li ng-repeat = "player in gameState.players | filter: {isAlive: true, name: '!' + user.name}">
+                <button class="btn " ng-click="lynch(player)">
+                  {{player.name}}
+                </button>
+                <div style="width: 50%; float: right; padding-left: 20px;">
+                  <div ng-repeat="r in range(player.lynchCount)" style="float: left;"><img src="farmer.png" width="20" height="20"></div>
+                </div>
+              </li>
+            </ul>
+            <p class="text-error">Once more than half the living players have voted for the same person, that person will be lynched and it will become night.</p>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="row" ng-if="gameState.phase == 'day' && user.isAlive">
-      <div class="col-sm-12">
-        Choose who to lynch
-        <ul>
-          <li ng-repeat = "player in gameState.players | filter: {isAlive: true, name: '!' + user.name}">
-            <button class="btn btn-default" ng-click="lynch(player)">
-              {{player.name}}
-              {{player.lynchCount}}
-            </button>
-          </li>
-        </ul>
-      </div>
-    </div>
+  </div>
+
+  <div ng-show="page == 'chat'" class="chat">
     <div class="row">
       <div class="col-sm-12">
-        <div style="height: 500px;">
-          <div ng-repeat="chat in chats">
+        <div>
+          <div ng-repeat="chat in chats" style="margin-bottom: 3px;">
             {{chat.time}}
-            {{chat.name}}
+            {{chat.name}} says:
+            <br>
             {{chat.message}}
           </div>
         </div>
-        <form >
+        <form ng-show="user.isAlive">
           <div class="form-group">
             <input type="text" class="form-control" ng-model="chatMessage">
           </div>
-          <button type="submit" class="btn btn-default" ng-click="chat(chatMessage); chatMessage = ''" style="margin: auto; display:block;">Send</button>
+          <button type="submit" class="btn " ng-click="chat(chatMessage); chatMessage = ''" style="margin: auto; display:block;">Send</button>
         </form>
       </div>
     </div>

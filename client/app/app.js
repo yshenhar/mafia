@@ -39,12 +39,14 @@ angular.module('mafiaApp')
 
 var mafiaApp = angular.module("mafiaApp");
 
-mafiaApp.run(function($rootScope, $state, $location){
+mafiaApp.run(function($rootScope, $state){
   var socket = io();
 
   window.__socket = socket;
 
   $rootScope.socket = socket;
-
+  $rootScope.range = function(n) {
+    return _.range(n);
+  };
   $state.go("join");
 });

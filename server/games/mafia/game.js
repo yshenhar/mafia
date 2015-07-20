@@ -25,7 +25,8 @@ var sendState = function(specificUsers){
       if(userEl.role != "mafia" || sendToUser.role != "mafia") userEl.role = undefined;
     });
 
-    if(sendToUser.role != "mafia") payload.suggestedKill = undefined;
+    if(sendToUser.role != "mafia")
+      payload.whoToKill = undefined;
 
     process.send({username: sendToUser.name, message: "game-tick", payload: payload});
   });
@@ -61,12 +62,13 @@ process.on("message", function(data){
 
     var counts = _.countBy(currentTick.suggestedKill);
     currentTick.whoToKill = getWhoToKill(counts, livingMafia);
+
+    gameState.suggestedKill = currentTick.suggestedKill;
+    sendState(livingMafia);
+
     if(currentTick.whoToKill)
       doneKilling();
-    else{
-      gameState.suggestedKill = currentTick.suggestedKill;
-      sendState(livingMafia);
-    }
+
     //data.data.playername = who to kill
     //data.user who wants to do the killing
   }else if(data.type === "save"){
