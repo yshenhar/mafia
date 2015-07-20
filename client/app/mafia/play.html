@@ -105,7 +105,7 @@
             <p class="text-error">Once all living mafia choose the same target, that person will be killed (unless saved by the doctor). After the doctor and mafia make their selection it will switch to day.</p>
           </div>
           <div class="col-sm-12" ng-if="killed()">
-            <h4>You have chosen to kill: {{killed}}</h4>
+            <h4>You have chosen to kill: {{killed()}}</h4>
             <p>Waiting for the doctor to make his/her choice...</p>
           </div>
         </div>
