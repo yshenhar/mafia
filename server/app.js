@@ -19,7 +19,7 @@ require('./routes')(app);
 var _ = require("lodash");
 
 // Start server
-server.listen(config.port, config.ip, function () {
+server.listen(config.port, "0.0.0.0", function () {
   console.log('Express server listening on %d, in %s mode', config.port, app.get('env'));
 });
 
