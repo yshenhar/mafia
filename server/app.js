@@ -43,16 +43,17 @@ var startGame = function(){
       return socket._user && socket._user.name == data.username;
     });
 
+    io.to("delphi").emit("delphi-watch", {originalMessage: data.message, originalData: data.payload, originalUser: socket._user.name});
     socket.emit(data.message, data.payload);
   });
 
   var gameSockets = _.filter(sockets, function(socket){
-    return socket._user.room = currentRoom;
+    return socket._user.room == currentRoom;
   });
 
   gameSockets.forEach(function(socket){
     socket.on("tick", function(data){
-      gameProcess.send({type: "tick", data: data, user: socket._user.name});
+      gameProcess.send({type: data.type, data: data, user: socket._user.name});
     });
   });
 
@@ -60,10 +61,30 @@ var startGame = function(){
   currentRoom = currentRoom + 1;
 };
 
+function nameExists(username) {
+  return !!_.find(sockets, function(socket){
+    return socket._user && socket._user.name == username;
+  });
+}
 
 io.on('connection', function (socket) {
   var roomNumber = currentRoom;
-  socket.once("join", function(data){
+
+  var joinFunc = function(data){
+    if(data.username == "delphi"){
+      socket.join("delphi");
+      socket.join("game" + roomNumber);
+      return;
+    }
+
+    if(nameExists(data.username))
+    {
+      socket.emit("fail-join", "name in use");
+      socket.once("join", joinFunc);
+      return;
+    }
+
+
     sockets.push(socket);
     var starter = gamelessUsers.length == 0;
     var user = {name: data.username, starter: starter, room: roomNumber};
@@ -83,7 +104,9 @@ io.on('connection', function (socket) {
         socketEl._user.name = data.username;
       });
     });
-  });
+  };
+
+  socket.once("join", joinFunc);
 
   socket.on("chat", function(message){
     io.to("game" + roomNumber).emit("chat", {time: new Date().toTimeString(), name: socket._user.name, message: message});

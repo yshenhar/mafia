@@ -2,33 +2,72 @@
 play!
 {{user.name}}
 {{user.role}}
-
+{{gameState.suggestedKill}}
 <div class="container">
-  <div class="row" ng-if="gameState.phase == 'night' && gameState.subPhase == 'mafia' && user.role == 'mafia'">
-    <div class="col-sm-12">
-      Choose who to kill
-      <ul>
-        <li ng-repeat = "player in gameState.players | filter:{role : '!mafia'}">
-          {{player.name}}
-        </li>
-      </ul>
-    </div>
+  <div ng-if="gameState.winner">
+    {{gameState.winner}} wins!
   </div>
-  <div class="row">
-    <div class="col-sm-12">
-      <div style="height: 500px;">
-        <div ng-repeat="chat in chats">
-          {{chat.time}}
-          {{chat.name}}
-          {{chat.message}}
+
+  <div ng-if="!gameState.winner">
+    <div ng-if="!user.isAlive">
+      You are dead :(
+    </div>
+    <div class="row" ng-if="gameState.phase == 'night' && user.role == 'townfolk' && user.isAlive">
+      Please wait while people are dying and/or being saved.
+    </div>
+    <div class="row" ng-if="gameState.phase == 'night' && user.role == 'doctor' && user.isAlive">
+      <div class="col-sm-12">
+        Choose who to save
+        <ul>
+          <li ng-repeat = "player in gameState.players | filter: {isAlive: true}">
+            <button class="btn btn-default" ng-click="save(player)">
+              {{player.name}}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="row" ng-if="gameState.phase == 'night' && user.role == 'mafia' && user.isAlive">
+      <div class="col-sm-12">
+        Choose who to kill
+        <ul>
+          <li ng-repeat = "player in gameState.players | filter:{role : '!mafia', isAlive: true}">
+            <button class="btn btn-default" ng-click="kill(player)">
+              {{player.name}}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="row" ng-if="gameState.phase == 'day' && user.isAlive">
+      <div class="col-sm-12">
+        Choose who to lynch
+        <ul>
+          <li ng-repeat = "player in gameState.players | filter: {isAlive: true, name: '!' + user.name}">
+            <button class="btn btn-default" ng-click="lynch(player)">
+              {{player.name}}
+              {{player.lynchCount}}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-12">
+        <div style="height: 500px;">
+          <div ng-repeat="chat in chats">
+            {{chat.time}}
+            {{chat.name}}
+            {{chat.message}}
+          </div>
         </div>
+        <form >
+          <div class="form-group">
+            <input type="text" class="form-control" ng-model="chatMessage">
+          </div>
+          <button type="submit" class="btn btn-default" ng-click="chat(chatMessage); chatMessage = ''" style="margin: auto; display:block;">Send</button>
+        </form>
       </div>
-      <div class="form-group">
-        <input type="text" class="form-control" ng-model="chatMessage">
-      </div>
-      <form >
-        <button type="submit" class="btn btn-default" ng-click="chat()" style="margin: auto; display:block;">Send</button>
-      </form>
     </div>
   </div>
 </div>
